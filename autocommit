@@ -2,7 +2,7 @@
 require "git_diff"
 
 out = []
-diff = GitDiff.from_string(`git diff --word-diff=porcelain --word-diff-regex='\\w+|[^\\s\\w]'`)
+diff = GitDiff.from_string(`git diff --word-diff=porcelain --word-diff-regex='\\w+|[^\\s\\w]' HEAD`)
 diff.files.each do |file|
   file.hunks.each do |hunk|
     del_buf = nil
