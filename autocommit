@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+require "git_diff"
+
+out = []
+diff = GitDiff.from_string(`git diff --word-diff=porcelain --word-diff-regex='\\w+|[^\\s\\w]'`)
+diff.files.each do |file|
+  file.hunks.each do |hunk|
+    del_buf = nil
+    flush_del_buf = -> {
+      if del_buf
+        out << "➖#{del_buf.content[1..-1].strip}"
+        del_buf = nil
+      end
+    }
+    hunk.lines.each do |line|
+      text = line.content[1..-1].strip
+      if line.content[0] == '+' && !text.empty?
+        if del_buf
+          out << "⏩ #{del_buf.content[1..-1].strip} ⇒ #{text}"
+          del_buf = nil
+        else
+          out << "➕ #{text}"
+        end
+      elsif line.content[0] == '-' && !text.empty?
+        flush_del_buf[]
+        del_buf = line
+      else
+        flush_del_buf[]
+      end
+    end
+    flush_del_buf[]
+  end
+end
+
+raise "Cannot parse changes" if out.length == 0
+
+prefix = ENV['AUTOCOMMIT_PREFIX'] || ''
+commit_message = "#{prefix}#{prefix.empty? ? '' : ' '}#{out.uniq.join('; ')}"
+puts commit_message
+if ARGV[0] != '-f'
+  puts
+  puts "Enter to commit, Ctrl-C to cancel."
+  gets
+end
+system "git", "add", "-A" or raise "Cannot add"
+ENV['GIT_COMMITTER_NAME'] = 'autocommit-cli'
+ENV['GIT_COMMITTER_EMAIL'] = 'autocommit-cli[bot]@users.noreply.github.com'
+system "git", "commit", "-m", commit_message or raise "Cannot commit"
