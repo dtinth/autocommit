@@ -37,12 +37,11 @@ raise "Cannot parse changes" if out.length == 0
 prefix = ENV['AUTOCOMMIT_PREFIX'] || ''
 commit_message = "#{prefix}#{prefix.empty? ? '' : ' '}#{out.uniq.join('; ')}"
 puts commit_message
-if ARGV[0] != '-f'
+if !ARGV.include?('-f')
   puts
   puts "Enter to commit, Ctrl-C to cancel."
-  gets
+  $stdin.gets
 end
-system "git", "add", "-A" or raise "Cannot add"
 ENV['GIT_COMMITTER_NAME'] = 'autocommit-cli'
 ENV['GIT_COMMITTER_EMAIL'] = 'autocommit-cli[bot]@users.noreply.github.com'
-system "git", "commit", "-m", commit_message or raise "Cannot commit"
+system "git", "commit", "-a", "-m", commit_message, *(ARGV.include?('-i') ? ['-ve'] : []) or raise "Cannot commit"
