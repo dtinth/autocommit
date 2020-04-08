@@ -44,4 +44,4 @@ if !ARGV.include?('-f')
 end
 ENV['GIT_COMMITTER_NAME'] = 'autocommit-cli'
 ENV['GIT_COMMITTER_EMAIL'] = 'autocommit-cli[bot]@users.noreply.github.com'
-system "git", "commit", "-a", "-m", commit_message, *(ARGV.include?('-i') ? ['-ve'] : []) or raise "Cannot commit"
+system "git", "commit", "-a", "-m", commit_message or raise "Cannot commit"
